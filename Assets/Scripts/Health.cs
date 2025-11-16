@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Health : MonoBehaviour
+public class HealthB : MonoBehaviour
 {
     public Team team;
     public float maxHP = 100f;

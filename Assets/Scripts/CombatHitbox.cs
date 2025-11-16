@@ -19,7 +19,7 @@ public class CombatHitbox : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        var h = other.GetComponentInParent<Health>();
+        var h = other.GetComponentInParent<HealthB>();
         if (!h) return;
 
         // Dost ateşini engelle
