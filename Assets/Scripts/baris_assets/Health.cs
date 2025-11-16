@@ -9,20 +9,31 @@ public class Health : MonoBehaviour
     public event Action<int, int> OnDamaged; // (current, max)
     public event Action OnDied;
 
-    private void Awake()
+private void Awake()
     {
         CurrentHP = Mathf.Max(1, maxHP);
+        Debug.Log($"Health initialized on {gameObject.name}: {CurrentHP}/{maxHP}");
     }
 
-    public void TakeDamage(int amount)
+public void TakeDamage(int amount)
     {
-        if (CurrentHP <= 0) return;
+        if (CurrentHP <= 0)
+        {
+            Debug.Log($"{gameObject.name} is already dead, ignoring damage");
+            return;
+        }
 
+        int oldHP = CurrentHP;
         CurrentHP = Mathf.Max(0, CurrentHP - Mathf.Max(1, amount));
+        Debug.Log($"{gameObject.name} took {amount} damage: {oldHP} -> {CurrentHP}");
+        
         OnDamaged?.Invoke(CurrentHP, maxHP);
 
         if (CurrentHP <= 0)
+        {
+            Debug.Log($"{gameObject.name} has died!");
             OnDied?.Invoke();
+        }
     }
 
     public void HealFull()
