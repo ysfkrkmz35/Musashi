@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 306254995}
   - component: {fileID: 306254996}
   - component: {fileID: 306254997}
+  - component: {fileID: 306254998}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -352,6 +353,7 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  graphics: {fileID: 0}
   idleClip: {fileID: 7400000, guid: dc1edeb3018c98546ba7f1fa641483d3, type: 2}
   runClip: {fileID: 7400000, guid: 48922211523830a4c8032eac872bf165, type: 2}
   attack1Clip: {fileID: 7400000, guid: 244ca7ce967f5d34ea37f4045a1d9e9c, type: 2}
@@ -366,6 +368,9 @@ MonoBehaviour:
   attackCooldown: 0.25
   attackActiveStart: 0.2
   attackActiveEnd: 0.55
+  characterLayerName: Characters
+  hitboxLayerName: Hitbox
+  configureLayerMatrixAtRuntime: 1
 --- !u!114 &306254997
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -379,6 +384,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHP: 20
+--- !u!114 &306254998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306254989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e8134195433afe46b994ad9c44ace62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDebugger
+  showHealthInfo: 1
+  showLayerInfo: 1
+  showHitboxes: 1
+  healthBarColor: {r: 0, g: 1, b: 0, a: 1}
+  hitboxColor: {r: 1, g: 0, b: 0, a: 0.3}
 --- !u!1 &705199560
 GameObject:
   m_ObjectHideFlags: 0
@@ -560,6 +582,7 @@ GameObject:
   - component: {fileID: 912530639}
   - component: {fileID: 912530638}
   - component: {fileID: 912530637}
+  - component: {fileID: 912530645}
   m_Layer: 8
   m_Name: Enemy
   m_TagString: Enemy
@@ -636,7 +659,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 017adfdda983fb64c815c19c85891840, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHP: 5
+  maxHP: 10
 --- !u!70 &912530640
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -672,7 +695,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Size: {x: 0.5, y: 1}
+  m_Size: {x: 0.5, y: 0.7}
   m_Direction: 0
 --- !u!114 &912530641
 MonoBehaviour:
@@ -701,7 +724,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 1
+  m_GravityScale: 4
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -780,15 +803,31 @@ Transform:
   m_GameObject: {fileID: 912530636}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.514, y: -0.18349, z: 0}
+  m_LocalPosition: {x: 1.411, y: -0.181, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1399296563}
   - {fileID: 1539541309}
   - {fileID: 2110426468}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &912530645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912530636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e8134195433afe46b994ad9c44ace62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDebugger
+  showHealthInfo: 1
+  showLayerInfo: 1
+  showHitboxes: 1
+  healthBarColor: {r: 0, g: 1, b: 0, a: 1}
+  hitboxColor: {r: 1, g: 0, b: 0, a: 0.3}
 --- !u!1 &1285888238
 GameObject:
   m_ObjectHideFlags: 0
@@ -819,37 +858,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 306254994}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1399296562
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1399296563}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1399296563
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1399296562}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 912530644}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1539541308
 GameObject:
@@ -896,9 +904,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4be98c5227cd9b74bb29a3c6c46f025c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitboxDamage
-  damage: 1
-  targetTag: Player
+  damage: 3
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  targetRootTag: 
   ownerRoot: {fileID: 912530644}
+  debugLogs: 1
 --- !u!61 &1539541311
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1022,8 +1034,8 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_Size: {x: 5, y: 5}
+  m_EdgeRadius: 5
 --- !u!114 &1564429552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1036,9 +1048,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4be98c5227cd9b74bb29a3c6c46f025c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  damage: 1
-  targetTag: Enemy
+  damage: 2
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  targetRootTag: 
   ownerRoot: {fileID: 306254994}
+  debugLogs: 1
 --- !u!1 &1966403971
 GameObject:
   m_ObjectHideFlags: 0
