@@ -37,7 +37,11 @@ public class StanceChangeFeedback : MonoBehaviour
 
     void Start()
     {
-        _enemy = FindObjectOfType<EnemyStanceController>();
+        // --- FIXED LINE BELOW ---
+        // Original was: _enemy = FindFirstObjectByTypeEnemyStanceController>(());
+        _enemy = FindFirstObjectByType<EnemyStanceController>();
+        // ------------------------
+
         if (_enemy != null)
         {
             _enemyStance = _enemy.GetComponent<StanceBasedCombatSystem>();

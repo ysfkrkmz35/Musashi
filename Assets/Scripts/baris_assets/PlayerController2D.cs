@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
@@ -45,6 +47,9 @@ public class PlayerController2D : MonoBehaviour
     [Header("Sword")]
     [SerializeField] private Collider2D swordHitbox;   // BoxCollider2D (IsTrigger)
     [SerializeField] private float attackCooldown = 0.20f;
+    [Tooltip("Mirror the sword hitbox automatically when the player flips direction.")]
+    [SerializeField] private bool mirrorSwordHitbox = true;
+    [SerializeField, Tooltip("Horizontal distance (in local units) for the sword hitbox when facing right.")] private float swordHitboxForwardOffset = 0.6f;
 
     [Header("Attack Active Window (0..1)")]
     [Range(0f, 1f)] public float attackActiveStart = 0.20f;
@@ -55,6 +60,10 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private string characterLayerName = "Characters";
     [SerializeField] private string hitboxLayerName = "Hitbox";
     [SerializeField] private bool configureLayerMatrixAtRuntime = true;
+
+    [Header("Death Handling")]
+    [SerializeField] private bool reloadSceneOnDeath = true;
+    [SerializeField] private float sceneReloadDelay = 2f;
 
     // ===== Private =====
     private Rigidbody2D rb;
@@ -73,6 +82,10 @@ public class PlayerController2D : MonoBehaviour
     private float nextAttackAllowedTime;
     private float inputX; // -1..1
     private float hitEndTime;
+    private bool sceneReloadScheduled;
+    private Transform swordHitboxTransform;
+    private Vector3 swordHitboxDefaultLocalPos;
+    private Vector3 swordHitboxDefaultLocalScale;
 
     private void Awake()
     {
@@ -83,7 +96,15 @@ public class PlayerController2D : MonoBehaviour
 
         if (graphics == null && transform.childCount > 0) graphics = transform.GetChild(0);
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-        if (swordHitbox) swordHitbox.enabled = false;
+        if (swordHitbox)
+        {
+            swordHitbox.enabled = false;
+            swordHitboxTransform = swordHitbox.transform;
+            swordHitboxDefaultLocalPos = swordHitboxTransform.localPosition;
+            swordHitboxDefaultLocalScale = swordHitboxTransform.localScale;
+            if (swordHitboxForwardOffset <= 0f)
+                swordHitboxForwardOffset = Mathf.Abs(swordHitboxDefaultLocalPos.x);
+        }
 
         // Physics stability
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -243,18 +264,65 @@ public class PlayerController2D : MonoBehaviour
             SetState(Mathf.Abs(inputX) > 0.05f ? AnimState.Run : AnimState.Idle);
     }
 
-    private void OnDied() { SetState(AnimState.Dead); }
+    private void OnDied()
+    {
+        SetState(AnimState.Dead);
+
+        if (reloadSceneOnDeath && !sceneReloadScheduled)
+        {
+            sceneReloadScheduled = true;
+            StartCoroutine(ReloadSceneWithDelay());
+        }
+    }
+
+    private IEnumerator ReloadSceneWithDelay()
+    {
+        if (sceneReloadDelay > 0f)
+            yield return new WaitForSeconds(sceneReloadDelay);
+
+        var scene = SceneManager.GetActiveScene();
+        if (scene.IsValid())
+        {
+            SceneManager.LoadScene(scene.buildIndex);
+        }
+    }
 
     // ===== Facing =====
-    private void Face(bool faceRight)
+private void Face(bool faceRight)
     {
-        if (graphics == null) graphics = transform; // fallback
         if (facingRight == faceRight) return;
         facingRight = faceRight;
 
-        var s = graphics.localScale;
-        s.x = Mathf.Abs(s.x) * (faceRight ? 1f : -1f);
-        graphics.localScale = s;
+        // Flip the sprite renderer
+        if (sr != null)
+        {
+            sr.flipX = !faceRight;
+        }
+
+        // Also flip graphics if assigned
+        if (graphics != null)
+        {
+            var s = graphics.localScale;
+            s.x = Mathf.Abs(s.x) * (faceRight ? 1f : -1f);
+            graphics.localScale = s;
+        }
+
+        if (mirrorSwordHitbox)
+            UpdateSwordHitboxOrientation(faceRight);
+    }
+
+    private void UpdateSwordHitboxOrientation(bool faceRight)
+    {
+        if (swordHitboxTransform == null) return;
+
+        var pos = swordHitboxDefaultLocalPos;
+        float offset = swordHitboxForwardOffset > 0f ? swordHitboxForwardOffset : Mathf.Abs(swordHitboxDefaultLocalPos.x);
+        pos.x = offset * (faceRight ? 1f : -1f);
+        swordHitboxTransform.localPosition = pos;
+
+        var scale = swordHitboxDefaultLocalScale;
+        scale.x = Mathf.Abs(scale.x) * (faceRight ? 1f : -1f);
+        swordHitboxTransform.localScale = scale;
     }
 
     // ===== Utilities =====

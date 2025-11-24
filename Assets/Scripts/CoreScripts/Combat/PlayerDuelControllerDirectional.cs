@@ -75,10 +75,10 @@ public class PlayerDuelControllerDirectional : MonoBehaviour
         _focus = focusMax;
 
         // Find enemy
-        _enemy = FindObjectOfType<EnemyDuelControllerDirectional_V2>();
+        _enemy = FindAnyObjectByType<EnemyDuelControllerDirectional_V2>();
         if (_enemy == null)
         {
-            var oldEnemy = FindObjectOfType<EnemyDuelControllerDirectional>();
+            var oldEnemy = FindAnyObjectByType<EnemyDuelControllerDirectional>();
             if (oldEnemy) Debug.LogWarning("[Player] Old enemy controller found! Please update to V2");
         }
 
@@ -314,7 +314,7 @@ public class PlayerDuelControllerDirectional : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
+        var ui = FindFirstObjectByType<FocusBar>();
         if (ui) ui.UpdatePlayerFocus(_focus, focusMax);
     }
 

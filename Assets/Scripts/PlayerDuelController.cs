@@ -150,8 +150,15 @@ public class PlayerDuelController : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
-        if (ui) ui.UpdatePlayerFocus(_focus, focusMax);
+        // --- FIX IS HERE ---
+        // Original: var ui = FindFirstObjectByTypeFocusBar>(());
+        // Correct Syntax:
+        var ui = FindFirstObjectByType<FocusBar>();
+
+        if (ui != null)
+        {
+            ui.UpdatePlayerFocus(_focus, focusMax);
+        }
     }
 
     void LockToSpot()

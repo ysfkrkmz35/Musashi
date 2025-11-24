@@ -90,7 +90,7 @@ public class PlayerStanceController : MonoBehaviour
         _stanceSystem = GetComponent<StanceBasedCombatSystem>();
         _focus = focusMax;
 
-        _enemy = FindObjectOfType<EnemyStanceController>();
+        _enemy = FindFirstObjectByType<EnemyStanceController>();
 
         if (_stanceSystem != null)
         {
@@ -431,7 +431,7 @@ public class PlayerStanceController : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
+        var ui = FindFirstObjectByType<FocusBar>();
         if (ui) ui.UpdatePlayerFocus(_focus, focusMax);
     }
 

@@ -113,8 +113,15 @@ public class EnemyDuelController : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
-        if (ui) ui.UpdateEnemyFocus(_focus, focusMax);
+        // --- FIX IS HERE ---
+        // Original was: FindFirstObjectByTypeFocusBar>(());
+        // Correct syntax:
+        var ui = FindFirstObjectByType<FocusBar>();
+
+        if (ui != null)
+        {
+            ui.UpdateEnemyFocus(_focus, focusMax);
+        }
     }
 
     void FacePlayer()

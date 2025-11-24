@@ -65,7 +65,10 @@ public class EnemyDuelControllerDirectional_V2 : MonoBehaviour
         _telegraphSystem = GetComponent<AttackTelegraphSystem>();
         _focus = focusMax;
 
-        _playerController = FindObjectOfType<PlayerDuelControllerDirectional>();
+        // --- FIXED LINE BELOW ---
+        // Removed the garbage text "()()ional>();"
+        _playerController = FindFirstObjectByType<PlayerDuelControllerDirectional>();
+        // ------------------------
 
         if (_combatSystem != null)
         {
@@ -287,6 +290,7 @@ public class EnemyDuelControllerDirectional_V2 : MonoBehaviour
             if (result.shouldTakeDamage)
             {
                 // Apply damage through Health system
+                // Note: Ensure HealthB exists in your project or change this to your health script
                 var playerHealth = _playerController.GetComponent<HealthB>();
                 if (playerHealth != null)
                 {
@@ -352,7 +356,7 @@ public class EnemyDuelControllerDirectional_V2 : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
+        var ui = FindFirstObjectByType<FocusBar>();
         if (ui) ui.UpdateEnemyFocus(_focus, focusMax);
     }
 

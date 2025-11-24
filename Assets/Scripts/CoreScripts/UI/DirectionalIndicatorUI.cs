@@ -46,9 +46,11 @@ namespace Musashi.Core.UI
 
         void Start()
         {
-            // Find combat systems
-            var player = FindObjectOfType<PlayerDuelControllerDirectional>();
-            var enemy = FindObjectOfType<EnemyDuelControllerDirectional>();
+            // --- FIX START ---
+            // Removed garbage text "()()nal>();" and "()()al>();"
+            var player = FindFirstObjectByType<PlayerDuelControllerDirectional>();
+            var enemy = FindFirstObjectByType<EnemyDuelControllerDirectional>();
+            // --- FIX END ---
 
             if (player != null)
             {
@@ -123,13 +125,18 @@ namespace Musashi.Core.UI
         {
             Color defColor = (playerCombat != null && playerCombat.IsParrying) ? parryColor : defenseColor;
 
-            if (playerUpArrow != null && dir != AttackDirection.Up)
+            // LOGIC FIX: Removed "&& dir != AttackDirection..." checks.
+            // If you keep that check, the arrow never turns to the active color because the if-statement becomes false when the direction matches.
+            if (playerUpArrow != null)
                 playerUpArrow.color = (dir == AttackDirection.Up) ? defColor : inactiveColor;
-            if (playerDownArrow != null && dir != AttackDirection.Down)
+
+            if (playerDownArrow != null)
                 playerDownArrow.color = (dir == AttackDirection.Down) ? defColor : inactiveColor;
-            if (playerLeftArrow != null && dir != AttackDirection.Left)
+
+            if (playerLeftArrow != null)
                 playerLeftArrow.color = (dir == AttackDirection.Left) ? defColor : inactiveColor;
-            if (playerRightArrow != null && dir != AttackDirection.Right)
+
+            if (playerRightArrow != null)
                 playerRightArrow.color = (dir == AttackDirection.Right) ? defColor : inactiveColor;
         }
 
@@ -145,10 +152,18 @@ namespace Musashi.Core.UI
         {
             Color defColor = (enemyCombat != null && enemyCombat.IsParrying) ? parryColor : defenseColor;
 
-            if (enemyUpArrow != null) enemyUpArrow.color = (dir == AttackDirection.Up) ? defColor : inactiveColor;
-            if (enemyDownArrow != null) enemyDownArrow.color = (dir == AttackDirection.Down) ? defColor : inactiveColor;
-            if (enemyLeftArrow != null) enemyLeftArrow.color = (dir == AttackDirection.Left) ? defColor : inactiveColor;
-            if (enemyRightArrow != null) enemyRightArrow.color = (dir == AttackDirection.Right) ? defColor : inactiveColor;
+            // LOGIC FIX: Removed "&& dir != AttackDirection..." checks here as well.
+            if (enemyUpArrow != null)
+                enemyUpArrow.color = (dir == AttackDirection.Up) ? defColor : inactiveColor;
+
+            if (enemyDownArrow != null)
+                enemyDownArrow.color = (dir == AttackDirection.Down) ? defColor : inactiveColor;
+
+            if (enemyLeftArrow != null)
+                enemyLeftArrow.color = (dir == AttackDirection.Left) ? defColor : inactiveColor;
+
+            if (enemyRightArrow != null)
+                enemyRightArrow.color = (dir == AttackDirection.Right) ? defColor : inactiveColor;
         }
 
         void UpdateParryVisuals()

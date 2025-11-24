@@ -55,8 +55,11 @@ public class StanceIndicatorUI : MonoBehaviour
 
     void Start()
     {
-        _player = FindObjectOfType<PlayerStanceController>();
-        _enemy = FindObjectOfType<EnemyStanceController>();
+        // --- FIXED LINES BELOW ---
+        // Original was: FindFirstObjectByTypePlayerStanceController>(());
+        _player = FindFirstObjectByType<PlayerStanceController>();
+        _enemy = FindFirstObjectByType<EnemyStanceController>();
+        // -------------------------
 
         if (_player != null)
             _playerStance = _player.GetComponent<StanceBasedCombatSystem>();

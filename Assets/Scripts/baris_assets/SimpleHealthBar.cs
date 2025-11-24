@@ -1,95 +1,99 @@
 using UnityEngine;
-using UnityEngine.UI;
 
-/// <summary>
-/// Simple health bar that follows a character and updates automatically
-/// </summary>
 public class SimpleHealthBar : MonoBehaviour
 {
-    [Header("References")]
     [SerializeField] private Health health;
-    [SerializeField] private Image fillImage;
-    [SerializeField] private CanvasGroup canvasGroup;
-    
-    [Header("Settings")]
-    [SerializeField] private Vector3 offset = new Vector3(0, 0.6f, 0);
-    [SerializeField] private Color fullHealthColor = Color.green;
-    [SerializeField] private Color lowHealthColor = Color.red;
-    [SerializeField] private float lowHealthThreshold = 0.3f;
-    [SerializeField] private bool hideWhenFull = false;
-    [SerializeField] private bool hideWhenDead = true;
+    [SerializeField] private Vector3 offset = new Vector3(0f, 0.6f, 0f);
+    [SerializeField] private Vector2 barSize = new Vector2(0.5f, 0.08f);
+    [SerializeField] private Color fullColor = Color.green;
+    [SerializeField] private Color lowColor = Color.red;
 
+    private GameObject bgBar;
+    private GameObject fillBar;
     private Transform target;
-    private Camera mainCam;
 
-    private void Awake()
+    private void Start()
     {
-        mainCam = Camera.main;
-        
         if (health == null)
             health = GetComponentInParent<Health>();
-            
-        if (health != null)
-        {
-            target = health.transform;
-            health.OnDamaged += OnHealthChanged;
-            health.OnDied += OnDied;
-        }
 
-        UpdateHealthBar();
+        if (health == null) return;
+
+        target = health.transform;
+        CreateBar();
+        
+        health.OnDamaged += UpdateHealth;
+        health.OnDied += OnDied;
+        
+        UpdateHealth(health.CurrentHP, health.GetMaxHP());
+    }
+
+    private void CreateBar()
+    {
+        // Background
+        bgBar = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        bgBar.name = "HealthBG";
+        bgBar.transform.SetParent(transform);
+        bgBar.transform.localPosition = Vector3.zero;
+        bgBar.transform.localScale = new Vector3(barSize.x, barSize.y, 1f);
+        Destroy(bgBar.GetComponent<Collider>());
+        var bgRenderer = bgBar.GetComponent<MeshRenderer>();
+        bgRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        bgRenderer.material.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+        bgRenderer.sortingOrder = 100;
+
+        // Fill
+        fillBar = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        fillBar.name = "HealthFill";
+        fillBar.transform.SetParent(transform);
+        fillBar.transform.localPosition = Vector3.zero;
+        fillBar.transform.localScale = new Vector3(barSize.x, barSize.y, 1f);
+        Destroy(fillBar.GetComponent<Collider>());
+        var fillRenderer = fillBar.GetComponent<MeshRenderer>();
+        fillRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        fillRenderer.material.color = fullColor;
+        fillRenderer.sortingOrder = 101;
+    }
+
+    private void LateUpdate()
+    {
+        if (target != null)
+        {
+            transform.position = target.position + offset;
+            transform.rotation = Quaternion.identity;
+        }
+    }
+
+    private void UpdateHealth(int current, int max)
+    {
+        if (fillBar == null) return;
+
+        float percent = (float)current / Mathf.Max(1, max);
+        
+        // Scale the fill bar
+        fillBar.transform.localScale = new Vector3(barSize.x * percent, barSize.y, 1f);
+        
+        // Move to align left
+        float offsetX = -barSize.x * (1f - percent) * 0.5f;
+        fillBar.transform.localPosition = new Vector3(offsetX, 0f, -0.01f);
+        
+        // Color lerp
+        var renderer = fillBar.GetComponent<MeshRenderer>();
+        renderer.material.color = Color.Lerp(lowColor, fullColor, percent / 0.3f);
+    }
+
+    private void OnDied()
+    {
+        if (fillBar != null)
+            fillBar.SetActive(false);
     }
 
     private void OnDestroy()
     {
         if (health != null)
         {
-            health.OnDamaged -= OnHealthChanged;
+            health.OnDamaged -= UpdateHealth;
             health.OnDied -= OnDied;
-        }
-    }
-
-    private void LateUpdate()
-    {
-        if (target != null && mainCam != null)
-        {
-            // Follow target with offset
-            Vector3 worldPos = target.position + offset;
-            transform.position = worldPos;
-            
-            // Face camera
-            transform.rotation = mainCam.transform.rotation;
-        }
-    }
-
-    private void OnHealthChanged(int current, int max)
-    {
-        UpdateHealthBar();
-    }
-
-    private void OnDied()
-    {
-        if (hideWhenDead && canvasGroup != null)
-            canvasGroup.alpha = 0f;
-    }
-
-    private void UpdateHealthBar()
-    {
-        if (health == null || fillImage == null) return;
-
-        int current = health.CurrentHP;
-        int max = Mathf.Max(1, 5); // Assuming max for visual purposes
-        float fillAmount = Mathf.Clamp01((float)current / max);
-
-        fillImage.fillAmount = fillAmount;
-
-        // Color gradient
-        fillImage.color = Color.Lerp(lowHealthColor, fullHealthColor, 
-            fillAmount / lowHealthThreshold);
-
-        // Hide when full
-        if (hideWhenFull && canvasGroup != null)
-        {
-            canvasGroup.alpha = fillAmount >= 1f ? 0f : 1f;
         }
     }
 }

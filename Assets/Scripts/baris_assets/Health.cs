@@ -29,6 +29,12 @@ public void TakeDamage(int amount)
         
         OnDamaged?.Invoke(CurrentHP, maxHP);
 
+        // Trigger hit effects
+        if (HitEffectManager.Instance != null)
+        {
+            HitEffectManager.Instance.TriggerHitEffect(gameObject, amount);
+        }
+
         if (CurrentHP <= 0)
         {
             Debug.Log($"{gameObject.name} has died!");
@@ -40,4 +46,7 @@ public void TakeDamage(int amount)
     {
         CurrentHP = Mathf.Max(1, maxHP);
     }
+
+
+public int GetMaxHP() { return maxHP; }
 }

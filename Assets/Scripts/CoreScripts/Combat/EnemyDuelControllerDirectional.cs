@@ -54,8 +54,10 @@ public class EnemyDuelControllerDirectional : MonoBehaviour
         _combatSystem = GetComponent<DirectionalCombatSystem>();
         _focus = focusMax;
 
-        // Find player controller
-        _playerController = FindObjectOfType<PlayerDuelControllerDirectional>();
+        // --- FIXED LINE BELOW ---
+        // Removed garbage text "()ional>();"
+        _playerController = FindFirstObjectByType<PlayerDuelControllerDirectional>();
+        // ------------------------
 
         // Subscribe to combat events
         if (_combatSystem != null)
@@ -287,7 +289,7 @@ public class EnemyDuelControllerDirectional : MonoBehaviour
 
     void UpdateFocusUI()
     {
-        var ui = FindObjectOfType<FocusBar>();
+        var ui = FindFirstObjectByType<FocusBar>();
         if (ui) ui.UpdateEnemyFocus(_focus, focusMax);
     }
 

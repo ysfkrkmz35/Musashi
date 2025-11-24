@@ -136,6 +136,7 @@ GameObject:
   - component: {fileID: 306254996}
   - component: {fileID: 306254997}
   - component: {fileID: 306254998}
+  - component: {fileID: 306254999}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -302,6 +303,7 @@ Transform:
   m_Children:
   - {fileID: 1285888239}
   - {fileID: 1564429550}
+  - {fileID: 1702733644}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &306254995
@@ -366,11 +368,15 @@ MonoBehaviour:
   deathSpeed: 1
   swordHitbox: {fileID: 1564429551}
   attackCooldown: 0.25
+  mirrorSwordHitbox: 1
+  swordHitboxForwardOffset: 0.6
   attackActiveStart: 0.2
   attackActiveEnd: 0.55
   characterLayerName: Characters
   hitboxLayerName: Hitbox
   configureLayerMatrixAtRuntime: 1
+  reloadSceneOnDeath: 1
+  sceneReloadDelay: 2
 --- !u!114 &306254997
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -396,11 +402,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e8134195433afe46b994ad9c44ace62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatDebugger
-  showHealthInfo: 1
-  showLayerInfo: 1
+  showHealthInfo: 0
+  showLayerInfo: 0
   showHitboxes: 1
   healthBarColor: {r: 0, g: 1, b: 0, a: 1}
   hitboxColor: {r: 1, g: 0, b: 0, a: 0.3}
+--- !u!114 &306254999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306254989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c84ad4809150cf4bb3d10447db7baf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthBarUI
 --- !u!1 &705199560
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,6 +584,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &832529193
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 832529194}
+  - component: {fileID: 832529195}
+  m_Layer: 0
+  m_Name: EnemyHealthBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &832529194
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832529193}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.411, y: 0.181, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 912530644}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &832529195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832529193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bb3782adaca530449e13e3f20fbee52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleHealthBar
+  health: {fileID: 0}
+  offset: {x: 0, y: 0.6, z: 0}
+  barSize: {x: 0.5, y: 0.08}
+  fullColor: {r: 0, g: 1, b: 0, a: 1}
+  lowColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &912530636
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,6 +696,8 @@ MonoBehaviour:
   aggroRange: 8
   attackRange: 1
   attackCooldown: 0.8
+  mirrorWeaponHitbox: 1
+  weaponHitboxForwardOffset: 0.75
   groundCheck: {fileID: 2110426468}
   groundCheckRadius: 0.15
   groundLayer:
@@ -809,6 +878,7 @@ Transform:
   m_Children:
   - {fileID: 1539541309}
   - {fileID: 2110426468}
+  - {fileID: 832529194}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &912530645
@@ -823,11 +893,117 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e8134195433afe46b994ad9c44ace62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatDebugger
-  showHealthInfo: 1
-  showLayerInfo: 1
+  showHealthInfo: 0
+  showLayerInfo: 0
   showHitboxes: 1
   healthBarColor: {r: 0, g: 1, b: 0, a: 1}
   hitboxColor: {r: 1, g: 0, b: 0, a: 0.3}
+--- !u!1 &1260911387
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1260911389}
+  - component: {fileID: 1260911388}
+  - component: {fileID: 1260911390}
+  - component: {fileID: 1260911391}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1260911388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1260911387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cfef77b237a05947ba1026d37dd73bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitEffectManager
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.1
+  enableDamageNumbers: 1
+  damageNumberPrefab: {fileID: 0}
+  damageNumberOffset: {x: 0, y: 0.5, z: 0}
+--- !u!4 &1260911389
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1260911387}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1260911390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1260911387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e0d4afa0b0eed442bc1530ca6eed3a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthUIBootstrapper
+  playerConfig:
+    label: Player
+    health: {fileID: 0}
+    followTarget: 0
+    anchoredPosition: {x: 180, y: -40}
+    size: {x: 220, y: 24}
+    worldOffset: {x: 0, y: 1.4, z: 0}
+    fullColor: {r: 0, g: 1, b: 0, a: 1}
+    lowColor: {r: 1, g: 0, b: 0, a: 1}
+    lowThreshold: 0.3
+    hideWhenFull: 0
+    hideWhenDead: 1
+  enemyConfig:
+    label: Enemy
+    health: {fileID: 0}
+    followTarget: 1
+    anchoredPosition: {x: 180, y: -80}
+    size: {x: 220, y: 24}
+    worldOffset: {x: 0, y: 1.8, z: 0}
+    fullColor: {r: 0, g: 1, b: 0, a: 1}
+    lowColor: {r: 1, g: 0, b: 0, a: 1}
+    lowThreshold: 0.3
+    hideWhenFull: 0
+    hideWhenDead: 1
+  canvasName: MusashiUIRoot
+  referenceResolution: {x: 1920, y: 1080}
+--- !u!114 &1260911391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1260911387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cfef77b237a05947ba1026d37dd73bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HitEffectManager
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.1
+  enableDamageNumbers: 1
+  damageNumberPrefab: {fileID: 0}
+  damageNumberOffset: {x: 0, y: 0.5, z: 0}
 --- !u!1 &1285888238
 GameObject:
   m_ObjectHideFlags: 0
@@ -910,7 +1086,7 @@ MonoBehaviour:
     m_Bits: 256
   targetRootTag: 
   ownerRoot: {fileID: 912530644}
-  debugLogs: 1
+  debugLogs: 0
 --- !u!61 &1539541311
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1054,7 +1230,56 @@ MonoBehaviour:
     m_Bits: 256
   targetRootTag: 
   ownerRoot: {fileID: 306254994}
-  debugLogs: 1
+  debugLogs: 0
+--- !u!1 &1702733643
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1702733644}
+  - component: {fileID: 1702733645}
+  m_Layer: 0
+  m_Name: PlayerHealthBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1702733644
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1702733643}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.181, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 306254994}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1702733645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1702733643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bb3782adaca530449e13e3f20fbee52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleHealthBar
+  health: {fileID: 0}
+  offset: {x: 0, y: 0.6, z: 0}
+  barSize: {x: 0.5, y: 0.08}
+  fullColor: {r: 0, g: 1, b: 0, a: 1}
+  lowColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &1966403971
 GameObject:
   m_ObjectHideFlags: 0
@@ -1067,6 +1292,7 @@ GameObject:
   - component: {fileID: 1966403974}
   - component: {fileID: 1966403973}
   - component: {fileID: 1966403972}
+  - component: {fileID: 1966403976}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1192,6 +1418,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1966403976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1966403971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79d7d81558f4b8d41aed2024fab74a27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
 --- !u!1 &2110426467
 GameObject:
   m_ObjectHideFlags: 0
@@ -1231,3 +1469,4 @@ SceneRoots:
   - {fileID: 306254994}
   - {fileID: 705199564}
   - {fileID: 912530644}
+  - {fileID: 1260911389}

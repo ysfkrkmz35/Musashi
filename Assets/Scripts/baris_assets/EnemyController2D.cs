@@ -16,8 +16,11 @@ public class EnemyController2D : MonoBehaviour
 
     [Header("AI")]
     [SerializeField] private float aggroRange = 8f;
-    [SerializeField] private float attackRange = 1.8f;
+    [SerializeField] private float attackRange = 1.15f;
     [SerializeField] private float attackCooldown = 0.8f;
+    [Tooltip("Mirror the weapon hitbox automatically when the enemy flips direction.")]
+    [SerializeField] private bool mirrorWeaponHitbox = true;
+    [SerializeField, Tooltip("Horizontal distance (local units) for the weapon hitbox when facing right.")] private float weaponHitboxForwardOffset = 0.75f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
@@ -26,7 +29,7 @@ public class EnemyController2D : MonoBehaviour
 
     [Header("Animation Clips (Fantasy Warrior)")]
     [SerializeField] private AnimationClip idleClip;
-    [SerializeField] private AnimationClip runClip;       // or "walk" if that’s what the pack uses
+    [SerializeField] private AnimationClip runClip;       // or "walk" if thatï¿½s what the pack uses
     [SerializeField] private AnimationClip attackClip;
     [SerializeField] private AnimationClip hitClip;
     [SerializeField] private AnimationClip deathClip;     // optional
@@ -58,6 +61,9 @@ public class EnemyController2D : MonoBehaviour
     private bool facingRight = true;
     private bool grounded;
     private float nextAttackTime;
+    private Transform weaponHitboxTransform;
+    private Vector3 weaponHitboxDefaultLocalPos;
+    private Vector3 weaponHitboxDefaultLocalScale;
 
     private void Awake()
     {
@@ -67,7 +73,15 @@ public class EnemyController2D : MonoBehaviour
         health = GetComponent<Health>();
 
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-        if (weaponHitbox) weaponHitbox.enabled = false;
+        if (weaponHitbox)
+        {
+            weaponHitbox.enabled = false;
+            weaponHitboxTransform = weaponHitbox.transform;
+            weaponHitboxDefaultLocalPos = weaponHitboxTransform.localPosition;
+            weaponHitboxDefaultLocalScale = weaponHitboxTransform.localScale;
+            if (weaponHitboxForwardOffset <= 0f)
+                weaponHitboxForwardOffset = Mathf.Abs(weaponHitboxDefaultLocalPos.x);
+        }
 
         // Build Playables graph
         graph = PlayableGraph.Create("EnemyGraph");
@@ -181,11 +195,33 @@ public class EnemyController2D : MonoBehaviour
         else SetState(State.Idle);
     }
 
-    private void Face(bool faceRight)
+private void Face(bool faceRight)
     {
         if (facingRight == faceRight) return;
         facingRight = faceRight;
-        Vector3 s = transform.localScale; s.x *= -1f; transform.localScale = s;
+        
+        // Flip sprite renderer
+        if (sr != null)
+        {
+            sr.flipX = !faceRight;
+        }
+
+        if (mirrorWeaponHitbox)
+            UpdateWeaponHitboxOrientation(faceRight);
+    }
+
+    private void UpdateWeaponHitboxOrientation(bool faceRight)
+    {
+        if (weaponHitboxTransform == null) return;
+
+        var pos = weaponHitboxDefaultLocalPos;
+        float offset = weaponHitboxForwardOffset > 0f ? weaponHitboxForwardOffset : Mathf.Abs(weaponHitboxDefaultLocalPos.x);
+        pos.x = offset * (faceRight ? 1f : -1f);
+        weaponHitboxTransform.localPosition = pos;
+
+        var scale = weaponHitboxDefaultLocalScale;
+        scale.x = Mathf.Abs(scale.x) * (faceRight ? 1f : -1f);
+        weaponHitboxTransform.localScale = scale;
     }
 
     // ---------- Attack ----------

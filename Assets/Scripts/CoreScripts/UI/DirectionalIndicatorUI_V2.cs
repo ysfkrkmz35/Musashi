@@ -42,8 +42,11 @@ namespace Musashi.Core.UI
 
         void Start()
         {
-            var player = FindObjectOfType<PlayerDuelControllerDirectional>();
-            var enemy = FindObjectOfType<EnemyDuelControllerDirectional_V2>();
+            // --- FIXED SECTIONS BELOW ---
+            // Removed the garbage text "(nal>();" and "()V2>();"
+            var player = FindFirstObjectByType<PlayerDuelControllerDirectional>();
+            var enemy = FindFirstObjectByType<EnemyDuelControllerDirectional_V2>();
+            // ----------------------------
 
             if (player != null)
             {
@@ -118,13 +121,18 @@ namespace Musashi.Core.UI
         {
             Color defColor = (playerCombat != null && playerCombat.IsParrying) ? parryColor : defenseColor;
 
-            if (playerUpArrow != null && dir != AttackDirection.Up)
+            // LOGIC FIX: Removed "&& dir != AttackDirection..." checks here.
+            // If you keep that check, the arrow that MATCHES the direction never gets updated to the active color.
+            if (playerUpArrow != null)
                 playerUpArrow.color = (dir == AttackDirection.Up) ? defColor : inactiveColor;
-            if (playerDownArrow != null && dir != AttackDirection.Down)
+
+            if (playerDownArrow != null)
                 playerDownArrow.color = (dir == AttackDirection.Down) ? defColor : inactiveColor;
-            if (playerLeftArrow != null && dir != AttackDirection.Left)
+
+            if (playerLeftArrow != null)
                 playerLeftArrow.color = (dir == AttackDirection.Left) ? defColor : inactiveColor;
-            if (playerRightArrow != null && dir != AttackDirection.Right)
+
+            if (playerRightArrow != null)
                 playerRightArrow.color = (dir == AttackDirection.Right) ? defColor : inactiveColor;
         }
 
@@ -149,6 +157,7 @@ namespace Musashi.Core.UI
         {
             Color defColor = (enemyCombat != null && enemyCombat.IsParrying) ? parryColor : defenseColor;
 
+            // LOGIC FIX: Removed "&& dir != AttackDirection..." checks here as well.
             if (enemyUpArrow != null) enemyUpArrow.color = (dir == AttackDirection.Up) ? defColor : inactiveColor;
             if (enemyDownArrow != null) enemyDownArrow.color = (dir == AttackDirection.Down) ? defColor : inactiveColor;
             if (enemyLeftArrow != null) enemyLeftArrow.color = (dir == AttackDirection.Left) ? defColor : inactiveColor;
@@ -194,7 +203,8 @@ namespace Musashi.Core.UI
             if (playerUpArrow != null && playerUpArrow.transform.parent != null)
                 playerUpArrow.transform.parent.localScale = Vector3.one;
 
-            UpdatePlayerAttackIndicator(playerCombat.CurrentAttackDirection);
+            if (playerCombat != null)
+                UpdatePlayerAttackIndicator(playerCombat.CurrentAttackDirection);
         }
     }
 }
