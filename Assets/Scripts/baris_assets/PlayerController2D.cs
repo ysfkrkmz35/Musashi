@@ -1,345 +1,85 @@
-using System.Collections;
-using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Playables;
-using UnityEngine.Animations;
-using UnityEngine.SceneManagement;
+﻿using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(SpriteRenderer))]
-[RequireComponent(typeof(Health))]
+// Class adı dosya adı ile aynı yapıldı: PlayerController -> PlayerController2D
 public class PlayerController2D : MonoBehaviour
 {
-    // ===== Movement =====
-    [Header("Movement")]
-    [SerializeField] private float moveSpeed = 6f;
-    [SerializeField] private float jumpForce = 12f;
+    [Header("Hareket Ayarları")]
+    public float moveSpeed = 8f;
+    public float jumpForce = 12f;
 
-    // ===== Ground Check =====
-    [Header("Ground Check")]
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundCheckRadius = 0.15f;
-    [SerializeField] private LayerMask groundLayer = 0;
+    [Header("Zemin Kontrolü")]
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.2f;
+    public LayerMask groundLayer;
 
-    // ===== Graphics (flip only visuals) =====
-    [Header("Graphics")]
-    [SerializeField] private Transform graphics; // child with SpriteRenderer + Animator
-
-    // ===== Animation =====
-    public enum AnimState { Idle, Run, Attack1, Hit, Dead }
-
-    [Header("Animation Clips")]
-    [SerializeField] private AnimationClip idleClip;
-    [SerializeField] private AnimationClip runClip;
-    [SerializeField] private AnimationClip attack1Clip;
-    [SerializeField] private AnimationClip hitClip;
-    [SerializeField] private AnimationClip deathClip;
-
-    [Header("Playback Speeds")]
-    [SerializeField] private float idleSpeed = 1f;
-    [SerializeField] private float runSpeed = 1f;
-    [SerializeField] private float attack1Speed = 1f;
-    [SerializeField] private float hitSpeed = 1f;
-    [SerializeField] private float deathSpeed = 1f;
-
-    // ===== Sword & Attack =====
-    [Header("Sword")]
-    [SerializeField] private Collider2D swordHitbox;   // BoxCollider2D (IsTrigger)
-    [SerializeField] private float attackCooldown = 0.20f;
-    [Tooltip("Mirror the sword hitbox automatically when the player flips direction.")]
-    [SerializeField] private bool mirrorSwordHitbox = true;
-    [SerializeField, Tooltip("Horizontal distance (in local units) for the sword hitbox when facing right.")] private float swordHitboxForwardOffset = 0.6f;
-
-    [Header("Attack Active Window (0..1)")]
-    [Range(0f, 1f)] public float attackActiveStart = 0.20f;
-    [Range(0f, 1f)] public float attackActiveEnd = 0.55f;
-
-    // ===== Layers (optional runtime safety) =====
-    [Header("Layer Names (optional)")]
-    [SerializeField] private string characterLayerName = "Characters";
-    [SerializeField] private string hitboxLayerName = "Hitbox";
-    [SerializeField] private bool configureLayerMatrixAtRuntime = true;
-
-    [Header("Death Handling")]
-    [SerializeField] private bool reloadSceneOnDeath = true;
-    [SerializeField] private float sceneReloadDelay = 2f;
-
-    // ===== Private =====
     private Rigidbody2D rb;
-    private Animator animator;
-    private SpriteRenderer sr;
-    private Health health;
-
-    private PlayableGraph graph;
-    // 0=Idle,1=Run,2=Attack1,3=Hit,4=Death
-    private AnimationMixerPlayable mixer;
-    private AnimationClipPlayable idlePlayable, runPlayable, attackPlayable, hitPlayable, deathPlayable;
-
-    private AnimState state = AnimState.Idle;
-    private bool facingRight = true;
+    private Animator anim;
+    private float moveInput;
     private bool isGrounded;
-    private float nextAttackAllowedTime;
-    private float inputX; // -1..1
-    private float hitEndTime;
-    private bool sceneReloadScheduled;
-    private Transform swordHitboxTransform;
-    private Vector3 swordHitboxDefaultLocalPos;
-    private Vector3 swordHitboxDefaultLocalScale;
+    private bool isFacingRight = true;
 
-    private void Awake()
+    [HideInInspector] public bool canMove = true;
+
+    void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        sr = GetComponent<SpriteRenderer>();
-        health = GetComponent<Health>();
-
-        if (graphics == null && transform.childCount > 0) graphics = transform.GetChild(0);
-        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-        if (swordHitbox)
-        {
-            swordHitbox.enabled = false;
-            swordHitboxTransform = swordHitbox.transform;
-            swordHitboxDefaultLocalPos = swordHitboxTransform.localPosition;
-            swordHitboxDefaultLocalScale = swordHitboxTransform.localScale;
-            if (swordHitboxForwardOffset <= 0f)
-                swordHitboxForwardOffset = Mathf.Abs(swordHitboxDefaultLocalPos.x);
-        }
-
-        // Physics stability
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-        rb.constraints |= RigidbodyConstraints2D.FreezeRotation;
-
-        if (configureLayerMatrixAtRuntime) SetupCollisionMatrix();
-
-        // --- Playables ---
-        graph = PlayableGraph.Create("Player2DGraph");
-        graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
-        var output = AnimationPlayableOutput.Create(graph, "AnimOutput", animator);
-
-        mixer = AnimationMixerPlayable.Create(graph, 5);
-        output.SetSourcePlayable(mixer);
-
-        if (idleClip) { idlePlayable = AnimationClipPlayable.Create(graph, idleClip); idlePlayable.SetSpeed(idleSpeed); graph.Connect(idlePlayable, 0, mixer, 0); }
-        if (runClip) { runPlayable = AnimationClipPlayable.Create(graph, runClip); runPlayable.SetSpeed(runSpeed); graph.Connect(runPlayable, 0, mixer, 1); }
-        if (attack1Clip) { attackPlayable = AnimationClipPlayable.Create(graph, attack1Clip); attackPlayable.SetSpeed(attack1Speed); attackPlayable.SetDuration(attack1Clip.length); graph.Connect(attackPlayable, 0, mixer, 2); }
-        if (hitClip) { hitPlayable = AnimationClipPlayable.Create(graph, hitClip); hitPlayable.SetSpeed(hitSpeed); hitPlayable.SetDuration(hitClip.length); graph.Connect(hitPlayable, 0, mixer, 3); }
-        if (deathClip) { deathPlayable = AnimationClipPlayable.Create(graph, deathClip); deathPlayable.SetSpeed(deathSpeed); deathPlayable.SetDuration(deathClip.length); graph.Connect(deathPlayable, 0, mixer, 4); }
-
-        SetWeights(1, 0, 0, 0, 0);
-        graph.Play();
-
-        health.OnDamaged += OnDamaged;
-        health.OnDied += OnDied;
+        anim = GetComponent<Animator>();
     }
 
-    private void OnDestroy()
+    void Update()
     {
-        if (health != null) { health.OnDamaged -= OnDamaged; health.OnDied -= OnDied; }
-        if (graph.IsValid()) graph.Destroy();
+        if (!canMove)
+        {
+            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            anim.SetFloat("Speed", 0);
+            return;
+        }
+
+        InputProcess();
+        AnimationProcess();
     }
 
-    private void Update()
+    void FixedUpdate()
     {
-        if (state == AnimState.Dead) return;
-
-        // Input
-        float x = 0f;
-        if (Gamepad.current != null) x = Gamepad.current.leftStick.ReadValue().x;
-        if (Keyboard.current != null)
+        if (canMove)
         {
-            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) x -= 1f;
-            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) x += 1f;
-        }
-        inputX = Mathf.Clamp(x, -1f, 1f);
-
-        bool jumpPressed =
-            (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) ||
-            (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
-
-        bool attackPressed =
-            (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
-            (Keyboard.current != null && Keyboard.current.jKey.wasPressedThisFrame) ||
-            (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame);
-
-        // Ground
-        if (groundCheck) isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-
-        // States
-        if (state == AnimState.Hit) { UpdateHit(); return; }
-        if (state == AnimState.Attack1) { UpdateAttackPlayable(); return; }
-
-        // Locomotion
-        if (jumpPressed && isGrounded) Jump();
-        if (inputX > 0.05f) Face(true); else if (inputX < -0.05f) Face(false);
-        SetState(Mathf.Abs(inputX) > 0.05f ? AnimState.Run : AnimState.Idle);
-
-        if (attackPressed && CanAttack()) StartAttack();
-    }
-
-    private void FixedUpdate()
-    {
-        if (state == AnimState.Idle || state == AnimState.Run)
-        {
-            var v = rb.linearVelocity; v.x = inputX * moveSpeed; rb.linearVelocity = v;
-        }
-        else
-        {
-            var v = rb.linearVelocity; v.x = 0f; rb.linearVelocity = v; // lock during Attack/Hit/Dead
+            isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+            rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
         }
     }
 
-    private void Jump()
+    void InputProcess()
     {
-        var v = rb.linearVelocity;
-        if (v.y < 0f) { v.y = 0f; rb.linearVelocity = v; }
-        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-    }
+        moveInput = Input.GetAxisRaw("Horizontal");
 
-    // ===== Animation state =====
-    private void SetState(AnimState next)
-    {
-        if (state == next) return;
-        state = next;
-
-        switch (state)
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            case AnimState.Idle: SetWeights(1, 0, 0, 0, 0); if (swordHitbox) swordHitbox.enabled = false; if (!idlePlayable.IsNull()) idlePlayable.SetTime(0); break;
-            case AnimState.Run: SetWeights(0, 1, 0, 0, 0); if (swordHitbox) swordHitbox.enabled = false; break;
-            case AnimState.Attack1: SetWeights(0, 0, 1, 0, 0); if (!attackPlayable.IsNull()) { attackPlayable.SetTime(0); attackPlayable.SetSpeed(attack1Speed); } if (swordHitbox) swordHitbox.enabled = false; break;
-            case AnimState.Hit: SetWeights(0, 0, 0, 1, 0); if (!hitPlayable.IsNull()) { hitPlayable.SetTime(0); hitEndTime = Time.time + Mathf.Max(0.05f, (float)hitPlayable.GetAnimationClip().length / Mathf.Max(0.01f, hitSpeed)); } if (swordHitbox) swordHitbox.enabled = false; break;
-            case AnimState.Dead: SetWeights(0, 0, 0, 0, 1); if (!deathPlayable.IsNull()) deathPlayable.SetTime(0); if (swordHitbox) swordHitbox.enabled = false; foreach (var c in GetComponentsInChildren<Collider2D>()) c.enabled = false; break;
-        }
-    }
-
-    private void SetWeights(float idle, float run, float attack, float hit, float death)
-    {
-        if (mixer.IsNull()) return;
-        mixer.SetInputWeight(0, idleClip ? idle : 0f);
-        mixer.SetInputWeight(1, runClip ? run : 0f);
-        mixer.SetInputWeight(2, attack1Clip ? attack : 0f);
-        mixer.SetInputWeight(3, hitClip ? hit : 0f);
-        mixer.SetInputWeight(4, deathClip ? death : 0f);
-    }
-
-    // ===== Attack =====
-    private bool CanAttack() => (Time.time >= nextAttackAllowedTime) && !attackPlayable.IsNull();
-
-    private void StartAttack()
-    {
-        nextAttackAllowedTime = Time.time + attackCooldown;
-        SetState(AnimState.Attack1);
-    }
-
-    private void UpdateAttackPlayable()
-    {
-        if (attackPlayable.IsNull()) { SetState(Mathf.Abs(inputX) > 0.05f ? AnimState.Run : AnimState.Idle); return; }
-
-        double t = attackPlayable.GetTime();
-        double dur = Mathf.Max(0.0001f, attack1Clip.length);
-        float norm = Mathf.Clamp01((float)(t / dur));
-
-        if (swordHitbox) swordHitbox.enabled = (norm >= attackActiveStart && norm <= attackActiveEnd);
-
-        if (t >= dur)
-        {
-            if (swordHitbox) swordHitbox.enabled = false;
-            SetState(Mathf.Abs(inputX) > 0.05f ? AnimState.Run : AnimState.Idle);
-        }
-    }
-
-    // ===== Hit / Death =====
-    private void OnDamaged(int current, int max)
-    {
-        if (state == AnimState.Dead) return;
-        // interrupt into Hit
-        SetState(AnimState.Hit);
-        var v = rb.linearVelocity; v.x = 0f; if (v.y > 0f) v.y *= 0.5f; rb.linearVelocity = v;
-    }
-
-    private void UpdateHit()
-    {
-        if (Time.time >= hitEndTime)
-            SetState(Mathf.Abs(inputX) > 0.05f ? AnimState.Run : AnimState.Idle);
-    }
-
-    private void OnDied()
-    {
-        SetState(AnimState.Dead);
-
-        if (reloadSceneOnDeath && !sceneReloadScheduled)
-        {
-            sceneReloadScheduled = true;
-            StartCoroutine(ReloadSceneWithDelay());
-        }
-    }
-
-    private IEnumerator ReloadSceneWithDelay()
-    {
-        if (sceneReloadDelay > 0f)
-            yield return new WaitForSeconds(sceneReloadDelay);
-
-        var scene = SceneManager.GetActiveScene();
-        if (scene.IsValid())
-        {
-            SceneManager.LoadScene(scene.buildIndex);
-        }
-    }
-
-    // ===== Facing =====
-private void Face(bool faceRight)
-    {
-        if (facingRight == faceRight) return;
-        facingRight = faceRight;
-
-        // Flip the sprite renderer
-        if (sr != null)
-        {
-            sr.flipX = !faceRight;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            anim.SetTrigger("Jump");
         }
 
-        // Also flip graphics if assigned
-        if (graphics != null)
-        {
-            var s = graphics.localScale;
-            s.x = Mathf.Abs(s.x) * (faceRight ? 1f : -1f);
-            graphics.localScale = s;
-        }
-
-        if (mirrorSwordHitbox)
-            UpdateSwordHitboxOrientation(faceRight);
+        if (moveInput > 0 && !isFacingRight) Flip();
+        else if (moveInput < 0 && isFacingRight) Flip();
     }
 
-    private void UpdateSwordHitboxOrientation(bool faceRight)
+    void AnimationProcess()
     {
-        if (swordHitboxTransform == null) return;
-
-        var pos = swordHitboxDefaultLocalPos;
-        float offset = swordHitboxForwardOffset > 0f ? swordHitboxForwardOffset : Mathf.Abs(swordHitboxDefaultLocalPos.x);
-        pos.x = offset * (faceRight ? 1f : -1f);
-        swordHitboxTransform.localPosition = pos;
-
-        var scale = swordHitboxDefaultLocalScale;
-        scale.x = Mathf.Abs(scale.x) * (faceRight ? 1f : -1f);
-        swordHitboxTransform.localScale = scale;
+        anim.SetFloat("Speed", Mathf.Abs(moveInput));
+        anim.SetBool("IsGrounded", isGrounded);
+        anim.SetFloat("VerticalVelocity", rb.linearVelocity.y);
     }
 
-    // ===== Utilities =====
-    private void SetupCollisionMatrix()
+    void Flip()
     {
-        int characters = LayerMask.NameToLayer(characterLayerName);
-        int hitbox = LayerMask.NameToLayer(hitboxLayerName);
-        if (characters >= 0) Physics2D.IgnoreLayerCollision(characters, characters, true);
-        if (hitbox >= 0)
-        {
-            Physics2D.IgnoreLayerCollision(hitbox, hitbox, true);             // optional
-            if (characters >= 0) Physics2D.IgnoreLayerCollision(hitbox, characters, false); // keep hits
-        }
+        isFacingRight = !isFacingRight;
+        Vector3 scaler = transform.localScale;
+        scaler.x *= -1;
+        transform.localScale = scaler;
     }
 
-    private void OnDrawGizmosSelected()
+    void OnDrawGizmos()
     {
-        if (groundCheck) Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (groundCheck != null)
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
 }

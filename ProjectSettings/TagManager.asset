@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Enemy
+  - Ground
   layers:
   - Default
   - TransparentFX
@@ -15,10 +16,10 @@ TagManager:
   - Ground
   - 
   - Characters
-  - Hitbox
-  - 
-  - 
-  - 
+  - PlayerAttack
+  - Enemy
+  - Player
+  - EnemyAttack
   - 
   - 
   - 
